@@ -1,3 +1,7 @@
+sketch designed to facilitate basic communication between an arduino MEGA and an esp8266-01. as it was written for a mega with additional hardware serial ports, it does not use software serial, but could probably be easily converted
+
+
+
 # arduinoESPhost
 use arduino mega to test/interact with an esp8266-01 without flashing esp module
 
