@@ -11,9 +11,9 @@ serial keylist : *note this is planned, not necesslaraly current*
 
 1 - test toggle your led
 
-2 - set operating mode
+2 - show ip address
 
-3 - 
+3 - set operating mode
 
 4 - enable multiple connections
 
