@@ -2,7 +2,11 @@ const int led = 13;
 String networkName;
 String pswd;
 String cmnd;
-bool passthru;
+bool passthru = false;
+bool networkListen = false;
+const int baud[]={300,1200,2400,4800,9600,19200,38400,57600,74880,115200,230400,250000,500000,1000000,2000000};
+
+
 
 void setup() {
  Serial.begin(9600);
@@ -10,29 +14,41 @@ void setup() {
  pinMode(led, OUTPUT);
  digitalWrite(led, LOW);
  passthru = false;
+ networkListen = false;
 
 
  
 }
 
 void loop() {
-  frWifi();//from wifi
-  if (passthru = true){     
-  toWifi();//to wifi
-  }
-  else{
-    if (Serial.available())
-      Serial1.write(Serial.read());
-  }
+  if (passthru == true){      
+    if (Serial.available()) //ifRead from pc...
+      Serial1.write(Serial.read());//...write to esp
+    if (Serial1.available()) //ifReadFromESP...
+      Serial.write(Serial1.read()); //...writeToPcFromESP
+    }
+   else{
+    toWifi();//to wifi
+    if (networkListen == true)
+      frWifi();//from wifi
+     else{
+       if (Serial1.available()) //ifReadFromESP...
+      Serial.write(Serial1.read()); //...writeToPcFromESP
+      }
+      
+ }
 }
 
 void frWifi(){
  if (Serial1.available()){ //ifReadFromESP...
- /* if (Serial1.find("+IPD,")){ //if it detects an external connection
+   char inbound;
+   inbound = Serial1.read();
+   if (inbound == '+'){ 
     digitalWrite(led, !digitalRead(led));//just toggle the led at this point idc
   }
- else*/
-  Serial.write(Serial1.read()); //...writeToPcFromESP
+   else{
+    Serial.print(Serial1.read());
+   }
  }
 }
 
@@ -49,21 +65,34 @@ void toWifi(){
      break;
     case '2':
       Serial1.println("AT+CIFSR"); //show IP address
+      delay(10);
       if (Serial1.available()>0){
         Serial.write(Serial1.read());
       }
      break;
     case '3':
-      Serial.println("AT+CWMODE=3");
+      Serial1.println("AT+CWMODE=3");
      break;
     case '4':
       Serial1.println("AT+CIPMUX=1"); //enable multiple connections
      break;
     case '5':
       Serial1.println("AT+CIPSERVER=1,80"); //start tcp server
+      networkListen = true;
      break;
     case '6':
       Serial1.println("AT+CIPSERVER=1,1336"); //start tcp server
+     break;
+    case '7':
+
+     break;
+    case '8':
+      networkListen = false;
+     break;
+    case '9':
+      passthru = true;
+      Serial.println("entering passthrough mode, turn on line ending+carrige return. the only way back is to reset");
+      
      break;
 
 
@@ -101,8 +130,21 @@ void toWifi(){
       Serial1.println("AT+RST");
      break;
 
+    case 'B':
+    case 'b':
+    for (int i = 0; i < 14; i++){ //iterate baud rates
+      Serial1.end(); //end current connection
+      Serial1.begin(baud[i]); //begin new connection at iterated baud rate
+      Serial1.println("AT+CIOBAUD_DEF=9600"); //attempt to set new default baud rate
+    }
+    Serial1.end(); //end the obscene 2000000 baud connection
+    Serial1.begin(9600); //restart to our default
+     break;
+
+/*************************************************************/
+
     default:
-      
+      Serial.println("that is an unrecognized command");
      break;
     }        
   }
