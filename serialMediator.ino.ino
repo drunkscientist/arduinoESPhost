@@ -39,6 +39,14 @@ void loop() {
  }
 }
 
+void espReturn(){
+   delay(100);
+      if (Serial1.available()>0){
+        delay(10);
+        Serial.write(Serial1.read());
+      }
+}
+
 void frWifi(){
  if (Serial1.available()){ //ifReadFromESP...
    char inbound;
@@ -47,15 +55,20 @@ void frWifi(){
     digitalWrite(led, !digitalRead(led));//just toggle the led at this point idc
   }
    else{
-    Serial.print(Serial1.read());
+    String returned = "";
+    while (Serial1.available()>0){      
+     char d = Serial1.read();
+     returned += d;          
+    }
+    Serial.print(returned);
    }
  }
 }
 
 void toWifi(){
- if (Serial.available()>0){ //if there is input from the pc
+ if (Serial.available()>0){ //if input from the pc
   char command = Serial.read();
-/**/
+
   switch (command){
     case '0':
       Serial1.println("AT");
@@ -65,10 +78,7 @@ void toWifi(){
      break;
     case '2':
       Serial1.println("AT+CIFSR"); //show IP address
-      delay(10);
-      if (Serial1.available()>0){
-        Serial.write(Serial1.read());
-      }
+      espReturn();
      break;
     case '3':
       Serial1.println("AT+CWMODE=3");
@@ -135,16 +145,25 @@ void toWifi(){
     for (int i = 0; i < 14; i++){ //iterate baud rates
       Serial1.end(); //end current connection
       Serial1.begin(baud[i]); //begin new connection at iterated baud rate
-      Serial1.println("AT+CIOBAUD_DEF=9600"); //attempt to set new default baud rate
+      Serial1.println("AT+UART_DEF=9600"); //attempt to set new default baud rate
     }
     Serial1.end(); //end the obscene 2000000 baud connection
     Serial1.begin(9600); //restart to our default
      break;
+    case 'l':
+      networkListen = false;
+     break;
+    case 'L':
+      networkListen = true;
+     break;
+    
 
 /*************************************************************/
 
     default:
       Serial.println("that is an unrecognized command");
+    case '/n':
+    
      break;
     }        
   }
